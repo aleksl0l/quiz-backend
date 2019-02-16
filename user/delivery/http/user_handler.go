@@ -21,9 +21,12 @@ type signUpRequest struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
 	Email    string `json:"email"`
+	RealName string `json:"real_name"`
+	City     string `json:"city"`
+	Age      rune   `json:"age"`
 }
 
-type JSONResponse map[string]string
+type JSONResponse map[string]interface{}
 
 func NewUserHttpHandler(e *echo.Echo, us user.Usecase) {
 	handler := &HttpUserHandler{
@@ -31,8 +34,6 @@ func NewUserHttpHandler(e *echo.Echo, us user.Usecase) {
 	}
 	e.POST("/users/login", handler.Login)
 	e.POST("/users", handler.SignUp)
-	//e.GET("/articles/:id", handler.GetByID)
-	//e.DELETE("/articles/:id", handler.Delete)
 }
 
 func (u *HttpUserHandler) Login(c echo.Context) error {
@@ -48,7 +49,9 @@ func (u *HttpUserHandler) Login(c echo.Context) error {
 	if err := uGet.CheckPassword(request.Password); err != nil {
 		return c.String(http.StatusBadRequest, "")
 	}
-	return c.JSON(http.StatusOK, JSONResponse{"token": uGet.GenToken()})
+	response := JSONResponse{"token": uGet.GenToken()}
+	response["user"] = uGet
+	return c.JSON(http.StatusOK, response)
 }
 
 func (u *HttpUserHandler) SignUp(c echo.Context) error {
@@ -60,7 +63,13 @@ func (u *HttpUserHandler) SignUp(c echo.Context) error {
 	if ctx == nil {
 		ctx = context.Background()
 	}
-	userInstance := &models.User{Username: signUpRequest.Username, Email: signUpRequest.Email}
+	userInstance := &models.User{
+		Username: signUpRequest.Username,
+		Email:    signUpRequest.Email,
+		RealName: signUpRequest.RealName,
+		City:     signUpRequest.City,
+		Age:      signUpRequest.Age,
+	}
 	userInstance.SetPassword(signUpRequest.Password)
 	if err := u.UUsecase.Store(ctx, userInstance); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "User with that email or username is exist")

@@ -14,6 +14,9 @@ type User struct {
 	Username string `sql:"username" json:"username"`
 	Email    string `sql:"email" json:"email"`
 	Password string `sql:"password"  json:"-"`
+	RealName string `sql:"real_name" json:"real_name"`
+	City     string `sql:"city" json:"city"`
+	Age      rune   `sql:"age" json:"age"`
 }
 
 func (u *User) GenToken() string {
