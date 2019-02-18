@@ -6,7 +6,7 @@ jobs:
     steps:
       - run:
           name: Deploy Over SSH
-          command: ssh $SSH_USER@SSH_SERVER $SSH_DEPLOY_SCRIPT
+          command: ssh $SSH_USER@$SSH_SERVER $SSH_DEPLOY_SCRIPT
 
 workflows:
   version: 2
