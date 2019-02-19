@@ -2,9 +2,13 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 	_ "github.com/lib/pq"
+	"github.com/spf13/viper"
+	"log"
+	"os"
 	questionHttpDeliver "quizChallenge/question/delivery/http"
 	questionRepo "quizChallenge/question/repository"
 	questionUcase "quizChallenge/question/usecase"
@@ -14,13 +18,35 @@ import (
 	"time"
 )
 
-var db *sql.DB
-
 func init() {
-	db, _ = sql.Open("postgres", "dbname=quiz user=quiz password=quiz host=localhost sslmode=disable")
+	viper.SetConfigFile(`config.json`)
+	err := viper.ReadInConfig()
+
+	if err != nil {
+		panic(err)
+	}
 }
 
 func main() {
+	dbHost := viper.GetString(`database.host`)
+	dbUser := viper.GetString(`database.user`)
+	dbPass := viper.GetString(`database.pass`)
+	dbName := viper.GetString(`database.name`)
+	sourceName := fmt.Sprintf("dbname=%s user=%s password=%s host=%s sslmode=disable",
+		dbName,
+		dbUser,
+		dbPass,
+		dbHost,
+	)
+	db, err := sql.Open("postgres", sourceName)
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = db.Ping()
+	if err != nil {
+		log.Fatal(err)
+		os.Exit(1)
+	}
 	defer db.Close()
 
 	e := echo.New()
@@ -32,11 +58,11 @@ func main() {
 	userRepository := userRepo.NewPsqlUserRepository(db)
 	questionRepository := questionRepo.NewPsqlQuestionRepository(db)
 
-	timeoutContext := time.Duration(60) * time.Second
+	timeoutContext := time.Duration(viper.GetInt("context.timeout")) * time.Second
 	uu := userUcase.NewUserUsecase(userRepository, timeoutContext)
 	qu := questionUcase.NewQuestionUsecase(questionRepository, timeoutContext)
 	userHttpDeliver.NewUserHttpHandler(e, uu)
 	questionHttpDeliver.NewQuestionHttpHandler(e, qu)
 
-	e.Logger.Fatal(e.Start("0.0.0.0:8080"))
+	e.Logger.Fatal(e.Start(viper.GetString("server.address")))
 }
