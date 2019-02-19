@@ -3,11 +3,12 @@ package models
 import (
 	"errors"
 	"github.com/dgrijalva/jwt-go"
+	"github.com/spf13/viper"
 	"golang.org/x/crypto/bcrypt"
 	"time"
 )
 
-const SECRET_KEY = "A String Very Very Very Strong!!@##$!@#$"
+var secretKey = viper.GetString("secretKey")
 
 type User struct {
 	ID       rune   `sql:"id" json:"id"`
@@ -25,7 +26,7 @@ func (u *User) GenToken() string {
 		"id":  u.ID,
 		"exp": time.Now().Add(time.Hour * 24).Unix(),
 	}
-	token, _ := jwtToken.SignedString([]byte(SECRET_KEY))
+	token, _ := jwtToken.SignedString([]byte(secretKey))
 	return token
 }
 
