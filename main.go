@@ -2,12 +2,9 @@ package main
 
 import (
 	"database/sql"
-	"flag"
-	"fmt"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 	_ "github.com/lib/pq"
-	"github.com/spf13/viper"
 	questionHttpDeliver "quizChallenge/question/delivery/http"
 	questionRepo "quizChallenge/question/repository"
 	questionUcase "quizChallenge/question/usecase"
@@ -16,8 +13,6 @@ import (
 	userUcase "quizChallenge/user/usecase"
 	"time"
 )
-
-var db *sql.DB
 
 func init() {
 	var configFile string
@@ -69,4 +64,3 @@ func main() {
 
 	e.Logger.Fatal(e.Start(viper.GetString("server.address")))
 }
-
