@@ -2,9 +2,14 @@ package main
 
 import (
 	"database/sql"
+	"flag"
+	"fmt"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 	_ "github.com/lib/pq"
+	"github.com/spf13/viper"
+	"log"
+	"os"
 	questionHttpDeliver "quizChallenge/question/delivery/http"
 	questionRepo "quizChallenge/question/repository"
 	questionUcase "quizChallenge/question/usecase"
@@ -17,6 +22,7 @@ import (
 func init() {
 	var configFile string
 	flag.StringVar(&configFile, "config", "config.json", "-config <file>")
+	flag.Parse()
 	viper.SetConfigFile(configFile)
 	err := viper.ReadInConfig()
 
