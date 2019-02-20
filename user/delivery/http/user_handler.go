@@ -45,7 +45,10 @@ func (u *HttpUserHandler) Login(c echo.Context) error {
 	if ctx == nil {
 		ctx = context.Background()
 	}
-	uGet, _ := u.UUsecase.GetByUsername(ctx, request.Username)
+	uGet, err := u.UUsecase.GetByUsername(ctx, request.Username)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Username or password is invalid")
+	}
 	if err := uGet.CheckPassword(request.Password); err != nil {
 		return c.String(http.StatusBadRequest, "")
 	}
