@@ -1,0 +1,10 @@
+[
+  {
+    "dropIndexes": "users",
+    "index": "unique_username_idx"
+  },
+  {
+    "dropIndexes": "users",
+    "index": "unique_email_idx"
+  }
+]
