@@ -24,7 +24,7 @@ func NewQuestionHttpHandler(e *echo.Echo, qu question.Usecase) {
 }
 
 func (u *HttpQuestionHandler) GetQuestions(c echo.Context) error {
-	request := new(questionGetRequest)
+	request := &questionGetRequest{}
 	if err := c.Bind(request); err != nil {
 		return err
 	}
