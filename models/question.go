@@ -1,8 +1,10 @@
 package models
 
 type Question struct {
-	ID      rune     `sql:"id" json:"id"`
-	Text    string   `sql:"text" json:"text"`
-	Image   string   `sql:"image" json:"image"`
-	Answers []Answer `sql:"password"  json:"answers"`
+	ID       interface{} `sql:"id" json:"id,omitempty" bson:"_id,omitempty"`
+	Text     string      `sql:"text" json:"text" bson:"text"`
+	Image    string      `sql:"image" json:"image" bson:"image"`
+	Type     string      `sql:"type" json:"type" bson:"type"`
+	Category string      `sql:"category" json:"category" bson:"category"`
+	Answers  []Answer    `sql:"answers"  json:"answers" bson:"answers"`
 }

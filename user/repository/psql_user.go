@@ -11,7 +11,6 @@ type psqlUserRepository struct {
 	DB *sql.DB
 }
 
-// NewMysqlArticleRepository will create an object that represent the article.Repository interface
 func NewPsqlUserRepository(DB *sql.DB) user.Repository {
 	return &psqlUserRepository{DB}
 }

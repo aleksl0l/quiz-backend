@@ -4,15 +4,18 @@ import (
 	"database/sql"
 	"flag"
 	"fmt"
+	"github.com/globalsign/mgo"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 	_ "github.com/lib/pq"
 	"github.com/spf13/viper"
 	"log"
 	"os"
+	"quizChallenge/question"
 	questionHttpDeliver "quizChallenge/question/delivery/http"
 	questionRepo "quizChallenge/question/repository"
 	questionUcase "quizChallenge/question/usecase"
+	"quizChallenge/user"
 	userHttpDeliver "quizChallenge/user/delivery/http"
 	userRepo "quizChallenge/user/repository"
 	userUcase "quizChallenge/user/usecase"
@@ -21,7 +24,7 @@ import (
 
 func init() {
 	var configFile string
-	flag.StringVar(&configFile, "config", "config.json", "-config <file>")
+	flag.StringVar(&configFile, "config", "config.json", "-config=<file>")
 	flag.Parse()
 	viper.SetConfigFile(configFile)
 	err := viper.ReadInConfig()
@@ -32,35 +35,49 @@ func init() {
 }
 
 func main() {
-	dbHost := viper.GetString(`database.host`)
-	dbUser := viper.GetString(`database.user`)
-	dbPass := viper.GetString(`database.pass`)
-	dbName := viper.GetString(`database.name`)
-	sourceName := fmt.Sprintf("dbname=%s user=%s password=%s host=%s sslmode=disable",
-		dbName,
-		dbUser,
-		dbPass,
-		dbHost,
-	)
-	db, err := sql.Open("postgres", sourceName)
-	if err != nil {
-		log.Fatal(err)
+	var userRepository user.Repository
+	var questionRepository question.Repository
+	if viper.GetBool(`database.use`) {
+		dbHost := viper.GetString(`database.host`)
+		dbUser := viper.GetString(`database.user`)
+		dbPass := viper.GetString(`database.pass`)
+		dbName := viper.GetString(`database.name`)
+		sourceName := fmt.Sprintf("dbname=%s user=%s password=%s host=%s sslmode=disable",
+			dbName,
+			dbUser,
+			dbPass,
+			dbHost,
+		)
+		db, err := sql.Open("postgres", sourceName)
+		if err != nil {
+			log.Fatal(err)
+		}
+		err = db.Ping()
+		if err != nil {
+			log.Fatal(err)
+			os.Exit(1)
+		}
+		defer db.Close()
+		userRepository = userRepo.NewPsqlUserRepository(db)
+		questionRepository = questionRepo.NewPsqlQuestionRepository(db)
 	}
-	err = db.Ping()
-	if err != nil {
-		log.Fatal(err)
-		os.Exit(1)
+
+	if viper.GetBool(`mongoDb.use`) {
+		sessionMongo, err := mgo.Dial(viper.GetString("mongoDb.host"))
+		if err != nil {
+			os.Exit(1)
+		}
+		dbMongo := sessionMongo.DB(viper.GetString("mongoDb.name"))
+		userRepository = userRepo.NewMongoUserRepository(dbMongo)
+		questionRepository = questionRepo.NewMongoQuestionRepository(dbMongo)
+		defer sessionMongo.Close()
 	}
-	defer db.Close()
 
 	e := echo.New()
 	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
 		Format: `[${time_rfc3339}] ${status} ${path} ${latency_human}` + "\n",
 	}))
 	e.Use(middleware.Recover())
-
-	userRepository := userRepo.NewPsqlUserRepository(db)
-	questionRepository := questionRepo.NewPsqlQuestionRepository(db)
 
 	timeoutContext := time.Duration(viper.GetInt("context.timeout")) * time.Second
 	uu := userUcase.NewUserUsecase(userRepository, timeoutContext)
