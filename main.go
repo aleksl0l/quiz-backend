@@ -11,6 +11,9 @@ import (
 	"github.com/spf13/viper"
 	"log"
 	"os"
+	gameHttpDeliver "quizChallenge/game/delivery/http"
+	gameRepo "quizChallenge/game/repository"
+	gameUcase "quizChallenge/game/usecase"
 	"quizChallenge/question"
 	questionHttpDeliver "quizChallenge/question/delivery/http"
 	questionRepo "quizChallenge/question/repository"
@@ -61,17 +64,18 @@ func main() {
 		userRepository = userRepo.NewPsqlUserRepository(db)
 		questionRepository = questionRepo.NewPsqlQuestionRepository(db)
 	}
-
+	var dbMongo *mgo.Database
 	if viper.GetBool(`mongoDb.use`) {
 		sessionMongo, err := mgo.Dial(viper.GetString("mongoDb.host"))
 		if err != nil {
 			os.Exit(1)
 		}
-		dbMongo := sessionMongo.DB(viper.GetString("mongoDb.name"))
+		dbMongo = sessionMongo.DB(viper.GetString("mongoDb.name"))
 		userRepository = userRepo.NewMongoUserRepository(dbMongo)
 		questionRepository = questionRepo.NewMongoQuestionRepository(dbMongo)
 		defer sessionMongo.Close()
 	}
+	gameRepository := gameRepo.NewMongoGameRepository(dbMongo)
 
 	e := echo.New()
 	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
@@ -82,8 +86,11 @@ func main() {
 	timeoutContext := time.Duration(viper.GetInt("context.timeout")) * time.Second
 	uu := userUcase.NewUserUsecase(userRepository, timeoutContext)
 	qu := questionUcase.NewQuestionUsecase(questionRepository, timeoutContext)
+	gu := gameUcase.NewGameUsecase(gameRepository, userRepository, timeoutContext)
+
 	userHttpDeliver.NewUserHttpHandler(e, uu)
 	questionHttpDeliver.NewQuestionHttpHandler(e, qu)
+	gameHttpDeliver.NewGameHttpHandelr(e, gu)
 
 	e.Logger.Fatal(e.Start(viper.GetString("server.address")))
 }
