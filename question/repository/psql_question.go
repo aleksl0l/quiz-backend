@@ -22,7 +22,7 @@ func NewPsqlQuestionRepository(db *sql.DB) question.Repository {
 func (r *psqlQuestionRepo) GetQuestions(ctx context.Context, qType, category string) ([]*models.Question, error) {
 	prepareQuery, _ := r.DB.Prepare(
 		`SELECT qm.id, qm.text, qm.image,
-       		array_agg(am.id), array_agg(am.text), array_agg(am.is_correct)
+      		array_agg(am.id), array_agg(am.text), array_agg(am.is_correct)
 			FROM question_models qm, answer_models am
 			WHERE am.question = qm.id AND category=$1 AND type=$2
 			GROUP BY qm.id, qm.text ORDER BY RANDOM() LIMIT 100`,
@@ -35,6 +35,7 @@ func (r *psqlQuestionRepo) GetQuestions(ctx context.Context, qType, category str
 		questions = append(questions, questionInstance)
 	}
 	return questions, nil
+	//return make([]*models.Question, 0, 100), nil
 }
 
 func bindResponse(rows *sql.Rows, qm *models.Question) *models.Question {
