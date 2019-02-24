@@ -26,6 +26,7 @@ func (r *mongoUserRepository) GetByUsername(ctx context.Context, username string
 }
 
 func (r *mongoUserRepository) Store(ctx context.Context, user *models.User) error {
+	user.ID = bson.NewObjectId()
 	err := r.DB.C("users").Insert(user)
 	return err
 }
