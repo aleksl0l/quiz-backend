@@ -3,6 +3,7 @@ package models
 import (
 	"errors"
 	"github.com/dgrijalva/jwt-go"
+	"github.com/globalsign/mgo/bson"
 	"github.com/spf13/viper"
 	"golang.org/x/crypto/bcrypt"
 	"time"
@@ -24,10 +25,12 @@ type User struct {
 
 func (u *User) GenToken() string {
 	jwtToken := jwt.New(jwt.GetSigningMethod("HS256"))
+	strId := u.ID.(bson.ObjectId).Hex()
 	jwtToken.Claims = jwt.MapClaims{
-		"id":  u.ID,
+		"id":  strId,
 		"exp": time.Now().Add(time.Hour * 24).Unix(),
 	}
+	secretKey := viper.GetString("secretKey")
 	token, _ := jwtToken.SignedString([]byte(secretKey))
 	return token
 }
