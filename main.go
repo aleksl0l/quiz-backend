@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"flag"
 	"fmt"
+	"github.com/01walid/echosentry"
 	"github.com/globalsign/mgo"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
@@ -31,7 +32,9 @@ func init() {
 	flag.Parse()
 	viper.SetConfigFile(configFile)
 	err := viper.ReadInConfig()
-
+	if err != nil {
+		panic(err)
+	}
 	if err != nil {
 		panic(err)
 	}
@@ -78,10 +81,11 @@ func main() {
 	gameRepository := gameRepo.NewMongoGameRepository(dbMongo)
 
 	e := echo.New()
+	echosentry.SetDSN(viper.GetString(`sentry.dsn`))
+	e.Use(echosentry.Middleware())
 	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
 		Format: `[${time_rfc3339}] ${status} ${path} ${latency_human}` + "\n",
 	}))
-	e.Use(middleware.Recover())
 
 	timeoutContext := time.Duration(viper.GetInt("context.timeout")) * time.Second
 	uu := userUcase.NewUserUsecase(userRepository, timeoutContext)
