@@ -1,10 +1,14 @@
 module quizChallenge
 
 require (
+	github.com/BurntSushi/toml v0.3.1 // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
+	github.com/globalsign/mgo v0.0.0-20181015135952-eeefdecb41b8
+	github.com/golang-migrate/migrate v3.5.4+incompatible // indirect
 	github.com/labstack/echo v3.3.5+incompatible
 	github.com/labstack/gommon v0.2.8 // indirect
 	github.com/lib/pq v1.0.0
+	github.com/mattes/migrate v3.0.1+incompatible // indirect
 	github.com/mattn/go-colorable v0.0.9 // indirect
 	github.com/mattn/go-isatty v0.0.4 // indirect
 	github.com/spf13/viper v1.3.1
