@@ -26,25 +26,26 @@ func (r *mongoGameRepository) SearchGame(
 		"categoryQuestions": gameCategory,
 		"user2id":           nil,
 	}).One(&game)
+	now := time.Now()
 	if err != nil {
+		game.ID = bson.NewObjectId()
 		game.TypeQuestions = gameType
 		game.CategoryQuestions = gameCategory
-		game.User1ID = userId
-		game.StartedAt = time.Now()
+		game.User1ID = bson.ObjectIdHex(userId)
+		game.StartedAt = &now
 		err := r.DB.C("games").Insert(game)
 		if err != nil {
 			return nil, err
 		}
 	} else {
-		gameUserId := game.User1ID.(string)
-		if gameUserId == userId {
+		if game.User1ID.Hex() == userId {
 			return nil, errors.New("you already search game")
 		}
-		err = r.DB.C("games").Update(bson.M{"_id": game.ID}, bson.M{"$set": bson.M{"user2id": userId}})
+		err = r.DB.C("games").Update(bson.M{"_id": game.ID}, bson.M{"$set": bson.M{"user2id": bson.ObjectIdHex(userId)}})
 		if err != nil {
 			return nil, err
 		}
-		game.User2ID = userId
+		game.User2ID = bson.ObjectIdHex(userId)
 	}
 	return game, nil
 }
