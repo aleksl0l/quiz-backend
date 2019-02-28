@@ -27,5 +27,14 @@ func (u *questionUsecase) GetQuestions(ctx context.Context, qType, category stri
 		return nil, err
 	}
 	return res, err
+}
 
+func (u *questionUsecase) Store(ctx context.Context, question *models.Question) error {
+	ctx, cancel := context.WithTimeout(ctx, u.contextTimeout)
+	defer cancel()
+	err := u.questionRepo.Store(ctx, question)
+	if err != nil {
+		return err
+	}
+	return nil
 }
