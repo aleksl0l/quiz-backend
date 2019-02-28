@@ -1,25 +1,20 @@
 package main
 
 import (
-	"database/sql"
 	"flag"
-	"fmt"
 	"github.com/01walid/echosentry"
 	"github.com/globalsign/mgo"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 	_ "github.com/lib/pq"
 	"github.com/spf13/viper"
-	"log"
 	"os"
 	gameHttpDeliver "quizChallenge/game/delivery/http"
 	gameRepo "quizChallenge/game/repository"
 	gameUcase "quizChallenge/game/usecase"
-	"quizChallenge/question"
 	questionHttpDeliver "quizChallenge/question/delivery/http"
 	questionRepo "quizChallenge/question/repository"
 	questionUcase "quizChallenge/question/usecase"
-	"quizChallenge/user"
 	userHttpDeliver "quizChallenge/user/delivery/http"
 	userRepo "quizChallenge/user/repository"
 	userUcase "quizChallenge/user/usecase"
@@ -41,44 +36,13 @@ func init() {
 }
 
 func main() {
-	var userRepository user.Repository
-	var questionRepository question.Repository
-	if viper.GetBool(`database.use`) {
-		dbHost := viper.GetString(`database.host`)
-		dbUser := viper.GetString(`database.user`)
-		dbPass := viper.GetString(`database.pass`)
-		dbName := viper.GetString(`database.name`)
-		sourceName := fmt.Sprintf("dbname=%s user=%s password=%s host=%s sslmode=disable",
-			dbName,
-			dbUser,
-			dbPass,
-			dbHost,
-		)
-		db, err := sql.Open("postgres", sourceName)
-		if err != nil {
-			log.Fatal(err)
-		}
-		err = db.Ping()
-		if err != nil {
-			log.Fatal(err)
-			os.Exit(1)
-		}
-		defer db.Close()
-		userRepository = userRepo.NewPsqlUserRepository(db)
-		questionRepository = questionRepo.NewPsqlQuestionRepository(db)
-	}
 	var dbMongo *mgo.Database
-	if viper.GetBool(`mongoDb.use`) {
-		sessionMongo, err := mgo.Dial(viper.GetString("mongoDb.host"))
-		if err != nil {
-			os.Exit(1)
-		}
-		dbMongo = sessionMongo.DB(viper.GetString("mongoDb.name"))
-		userRepository = userRepo.NewMongoUserRepository(dbMongo)
-		questionRepository = questionRepo.NewMongoQuestionRepository(dbMongo)
-		defer sessionMongo.Close()
+	sessionMongo, err := mgo.Dial(viper.GetString("mongoDb.host"))
+	if err != nil {
+		os.Exit(1)
 	}
-	gameRepository := gameRepo.NewMongoGameRepository(dbMongo)
+	dbMongo = sessionMongo.DB(viper.GetString("mongoDb.name"))
+	defer sessionMongo.Close()
 
 	e := echo.New()
 	echosentry.SetDSN(viper.GetString(`sentry.dsn`))
@@ -88,6 +52,9 @@ func main() {
 	}))
 
 	timeoutContext := time.Duration(viper.GetInt("context.timeout")) * time.Second
+	userRepository := userRepo.NewMongoUserRepository(dbMongo)
+	questionRepository := questionRepo.NewMongoQuestionRepository(dbMongo)
+	gameRepository := gameRepo.NewMongoGameRepository(dbMongo)
 	uu := userUcase.NewUserUsecase(userRepository, timeoutContext)
 	qu := questionUcase.NewQuestionUsecase(questionRepository, timeoutContext)
 	gu := gameUcase.NewGameUsecase(gameRepository, userRepository, timeoutContext)

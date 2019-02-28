@@ -1,7 +1,9 @@
 package models
 
+import "github.com/globalsign/mgo/bson"
+
 type Answer struct {
-	ID        interface{} `sql:"id" json:"id,omitempty" bson:"-"`
-	Text      string      `sql:"text" json:"text" bson:"text"`
-	IsCorrect bool        `sql:"is_correct" json:"is_correct" bson:"isCorrect"`
+	ID        bson.ObjectId `json:"id,omitempty" bson:"-"`
+	Text      string        `json:"text" bson:"text"`
+	IsCorrect bool          `json:"is_correct" bson:"isCorrect"`
 }

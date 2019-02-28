@@ -12,22 +12,21 @@ import (
 var secretKey = viper.GetString("secretKey")
 
 type User struct {
-	ID          interface{} `sql:"id" json:"id" bson:"_id,omitempty"`
-	Username    string      `sql:"username" json:"username"`
-	Email       string      `sql:"email" json:"email"`
-	Password    string      `sql:"password"  json:"-"`
-	RealName    string      `sql:"real_name" json:"real_name" bson:"realName"`
-	City        string      `sql:"city" json:"city"`
-	Age         rune        `sql:"age" json:"age"`
-	GamePoints  rune        `sql:"game_points" json:"game_points" bson:"gamePoints"`
-	IsDisableAd bool        `sql:"is_disable_ad" json:"is_disable_ad" bson:"isDisableAd"`
+	ID          bson.ObjectId `json:"id" bson:"_id,omitempty"`
+	Username    string        `json:"username"`
+	Email       string        `json:"email"`
+	Password    string        `json:"-"`
+	RealName    string        `json:"real_name" bson:"realName"`
+	City        string        `json:"city"`
+	Age         rune          `json:"age"`
+	GamePoints  rune          `json:"game_points" bson:"gamePoints"`
+	IsDisableAd bool          `json:"is_disable_ad" bson:"isDisableAd"`
 }
 
 func (u *User) GenToken() string {
 	jwtToken := jwt.New(jwt.GetSigningMethod("HS256"))
-	strId := u.ID.(bson.ObjectId).Hex()
 	jwtToken.Claims = jwt.MapClaims{
-		"id":  strId,
+		"id":  u.ID.Hex(),
 		"exp": time.Now().Add(time.Hour * 24).Unix(),
 	}
 	secretKey := viper.GetString("secretKey")
