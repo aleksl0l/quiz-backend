@@ -8,6 +8,7 @@ import (
 	"github.com/labstack/echo/middleware"
 	_ "github.com/lib/pq"
 	"github.com/spf13/viper"
+	"gopkg.in/go-playground/validator.v9"
 	"os"
 	gameHttpDeliver "quizChallenge/game/delivery/http"
 	gameRepo "quizChallenge/game/repository"
@@ -20,6 +21,14 @@ import (
 	userUcase "quizChallenge/user/usecase"
 	"time"
 )
+
+type CustomValidator struct {
+	validator *validator.Validate
+}
+
+func (cv *CustomValidator) Validate(i interface{}) error {
+	return cv.validator.Struct(i)
+}
 
 func init() {
 	var configFile string
@@ -45,7 +54,8 @@ func main() {
 	defer sessionMongo.Close()
 
 	e := echo.New()
-	echosentry.SetDSN(viper.GetString(`sentry.dsn`))
+	e.Validator = &CustomValidator{validator: validator.New()}
+		echosentry.SetDSN(viper.GetString(`sentry.dsn`))
 	e.Use(echosentry.Middleware())
 	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
 		Format: `[${time_rfc3339}] ${status} ${path} ${latency_human}` + "\n",

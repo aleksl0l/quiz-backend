@@ -26,3 +26,12 @@ func (r *mongoQuestionRepo) GetQuestions(ctx context.Context, qType, category st
 	}
 	return questions, nil
 }
+
+func (u *mongoQuestionRepo) Store(ctx context.Context, question *models.Question) error {
+	question.ID = bson.NewObjectId()
+	err := u.DB.C("questions").Insert(question)
+	if err != nil {
+		return err
+	}
+	return nil
+}
