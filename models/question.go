@@ -1,10 +1,12 @@
 package models
 
+import "github.com/globalsign/mgo/bson"
+
 type Question struct {
-	ID       interface{} `sql:"id" json:"id,omitempty" bson:"_id,omitempty"`
-	Text     string      `sql:"text" json:"text" bson:"text"`
-	Image    string      `sql:"image" json:"image" bson:"image"`
-	Type     string      `sql:"type" json:"type" bson:"type"`
-	Category string      `sql:"category" json:"category" bson:"category"`
-	Answers  []Answer    `sql:"answers"  json:"answers" bson:"answers"`
+	ID       bson.ObjectId `json:"id,omitempty" bson:"_id,omitempty"`
+	Text     string        `json:"text" bson:"text"`
+	Image    string        `json:"image" bson:"image"`
+	Type     string        `json:"type" bson:"type"`
+	Category string        `json:"category" bson:"category"`
+	Answers  []Answer      `json:"answers" bson:"answers"`
 }
