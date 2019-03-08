@@ -27,6 +27,7 @@ func NewGameHttpHandelr(e *echo.Echo, gu game.Usecase) {
 	gameGroup.Use(middleware.JWT([]byte(viper.GetString(`secretKey`))))
 	gameGroup.POST("/search_game", handler.SearchGame)
 	gameGroup.GET("", handler.GetGames)
+	gameGroup.GET("/:gameId", handler.GetGameById)
 }
 
 func (u *HttpGameHandler) SearchGame(c echo.Context) error {
@@ -61,4 +62,20 @@ func (u *HttpGameHandler) GetGames(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 	return c.JSON(http.StatusOK, games)
+}
+
+func (u *HttpGameHandler) GetGameById(c echo.Context) error {
+	ctx := c.Request().Context()
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	//user := c.Get("user").(*jwt.Token)
+	//claims := user.Claims.(jwt.MapClaims)
+	//userId := claims["id"].(string)
+	gameId := c.Param("gameId")
+	game, err := u.GUsecase.GetGameById(ctx, gameId)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+	return c.JSON(http.StatusOK, game)
 }

@@ -2,12 +2,10 @@ package repository
 
 import (
 	"context"
-	"errors"
 	"github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
 	"quizChallenge/game"
 	"quizChallenge/models"
-	"time"
 )
 
 type mongoGameRepository struct {
@@ -18,40 +16,39 @@ func NewMongoGameRepository(DB *mgo.Database) game.Repository {
 	return &mongoGameRepository{DB}
 }
 
-func (r *mongoGameRepository) SearchGame(
-	ctx context.Context, userId, gameType, gameCategory string) (*models.Game, error) {
+func (r *mongoGameRepository) GetGamesByCondition(ctx context.Context, condition bson.M) (*models.Game, error) {
 	game := &models.Game{}
-	err := r.DB.C("games").Find(bson.M{
-		"typeQuestions":     gameType,
-		"categoryQuestions": gameCategory,
-		"user2id":           nil,
-	}).One(&game)
-	now := time.Now()
+	err := r.DB.C("games").Find(condition).One(&game)
 	if err != nil {
-		game.ID = bson.NewObjectId()
-		game.TypeQuestions = gameType
-		game.CategoryQuestions = gameCategory
-		game.User1ID = bson.ObjectIdHex(userId)
-		game.StartedAt = &now
-		err := r.DB.C("games").Insert(game)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		if game.User1ID.Hex() == userId {
-			return nil, errors.New("you already search game")
-		}
-		err = r.DB.C("games").Update(bson.M{"_id": game.ID}, bson.M{"$set": bson.M{"user2id": bson.ObjectIdHex(userId)}})
-		if err != nil {
-			return nil, err
-		}
-		game.User2ID = bson.ObjectIdHex(userId)
+		return nil, err
 	}
-	return game, nil
+	return game, err
 }
 
 func (r *mongoGameRepository) GetGames(ctx context.Context, userId string) ([]*models.Game, error) {
 	games := make([]*models.Game, 0, 10)
-	err := r.DB.C("games").Find(bson.M{"$or": []bson.M{{"user1id": userId}, {"user2id": userId}}}).All(&games)
+	userObjectId := bson.ObjectIdHex(userId)
+	err := r.DB.C("games").Find(bson.M{
+		"$or": []bson.M{
+			{"user1id": userObjectId},
+			{"user2id": userObjectId},
+		},
+	}).All(&games)
 	return games, err
+}
+
+func (r *mongoGameRepository) Store(ctx context.Context, game *models.Game) error {
+	err := r.DB.C("games").Insert(game)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *mongoGameRepository) Update(ctx context.Context, game *models.Game, update bson.M) error {
+	err := r.DB.C("games").Update(bson.M{"_id": game.ID}, bson.M{"$set": update})
+	if err != nil {
+		return err
+	}
+	return nil
 }

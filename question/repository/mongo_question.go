@@ -35,3 +35,16 @@ func (u *mongoQuestionRepo) Store(ctx context.Context, question *models.Question
 	}
 	return nil
 }
+
+func (u *mongoQuestionRepo) GetRandomQuestions(ctx context.Context, qType, category string, size int) ([]*models.Question, error) {
+	questions := make([]*models.Question, 0, 10)
+	pipe := u.DB.C("questions").Pipe([]bson.M{
+		{"$match": bson.M{"type": qType, "category": category}},
+		{"$sample": bson.M{"size": size}},
+	})
+	err := pipe.All(&questions)
+	if err != nil {
+		return nil, err
+	}
+	return questions, nil
+}
