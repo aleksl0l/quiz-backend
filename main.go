@@ -67,7 +67,7 @@ func main() {
 	gameRepository := gameRepo.NewMongoGameRepository(dbMongo)
 	uu := userUcase.NewUserUsecase(userRepository, timeoutContext)
 	qu := questionUcase.NewQuestionUsecase(questionRepository, timeoutContext)
-	gu := gameUcase.NewGameUsecase(gameRepository, userRepository, timeoutContext)
+	gu := gameUcase.NewGameUsecase(gameRepository, userRepository, questionRepository, timeoutContext)
 
 	userHttpDeliver.NewUserHttpHandler(e, uu)
 	questionHttpDeliver.NewQuestionHttpHandler(e, qu)
