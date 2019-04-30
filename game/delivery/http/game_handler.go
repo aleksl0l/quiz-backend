@@ -44,9 +44,7 @@ func (u *HttpGameHandler) SearchGame(c echo.Context) error {
 	if ctx == nil {
 		ctx = context.Background()
 	}
-	user := c.Get("user").(*jwt.Token)
-	claims := user.Claims.(jwt.MapClaims)
-	userId := claims["id"].(string)
+	userId := getUserIdFromContext(c)
 	game, err := u.GUsecase.SearchGame(ctx, userId, request.Type, request.Category)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
