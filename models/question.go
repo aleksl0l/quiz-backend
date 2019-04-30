@@ -8,5 +8,5 @@ type Question struct {
 	Image    string        `json:"image" bson:"image"`
 	Type     string        `json:"type" bson:"type" validate:"required"`
 	Category string        `json:"category" bson:"category" validate:"required"`
-	Answers  []Answer      `json:"answers" bson:"answers" validate:"required,min=4"`
+	Answers  []Answer      `json:"answers" bson:"answers" validate:"required,min=2"`
 }
