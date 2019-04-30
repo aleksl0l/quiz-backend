@@ -44,6 +44,7 @@ func (u *gameUsecase) SearchGame(ctx context.Context, userId, gameType, gameCate
 		game.CategoryQuestions = gameCategory
 		game.User1ID = bson.ObjectIdHex(userId)
 		game.StartedAt = &now
+		game.Questions, _ = u.questionRepo.GetRandomQuestions(ctx, game.TypeQuestions, game.CategoryQuestions, 7)
 		err := u.gameRepo.Store(ctx, game)
 		if err != nil {
 			return nil, err
@@ -73,14 +74,6 @@ func (u *gameUsecase) GetGameById(ctx context.Context, gameId string) (*models.G
 	game, err := u.gameRepo.GetGamesByCondition(ctx, bson.M{"_id": bson.ObjectIdHex(gameId)})
 	if err != nil {
 		return nil, err
-	}
-	if game.Questions == nil || len(game.Questions) == 0 {
-		questions, err := u.questionRepo.GetRandomQuestions(ctx, game.TypeQuestions, game.CategoryQuestions, 7)
-		if err != nil {
-			return nil, err
-		}
-		err = u.gameRepo.Update(ctx, game, bson.M{"questions": questions})
-		game.Questions = questions
 	}
 	return game, nil
 }
