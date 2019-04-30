@@ -19,7 +19,7 @@ type searchGameRequest struct {
 	Category string `json:"category"`
 }
 
-func NewGameHttpHandelr(e *echo.Echo, gu game.Usecase) {
+func NewGameHttpHandler(e *echo.Echo, gu game.Usecase) {
 	handler := &HttpGameHandler{
 		GUsecase: gu,
 	}
@@ -69,9 +69,6 @@ func (u *HttpGameHandler) GetGameById(c echo.Context) error {
 	if ctx == nil {
 		ctx = context.Background()
 	}
-	//user := c.Get("user").(*jwt.Token)
-	//claims := user.Claims.(jwt.MapClaims)
-	//userId := claims["id"].(string)
 	gameId := c.Param("gameId")
 	game, err := u.GUsecase.GetGameById(ctx, gameId)
 	if err != nil {
