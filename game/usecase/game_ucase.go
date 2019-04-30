@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/globalsign/mgo/bson"
 	"quizChallenge/game"
 	"quizChallenge/models"
@@ -45,6 +46,10 @@ func (u *gameUsecase) SearchGame(ctx context.Context, userId, gameType, gameCate
 		game.User1ID = bson.ObjectIdHex(userId)
 		game.StartedAt = &now
 		game.Questions, _ = u.questionRepo.GetRandomQuestions(ctx, game.TypeQuestions, game.CategoryQuestions, 7)
+		game.UsersAnswers = make([]*models.UserAnswer, 0, 7)
+		for _, q := range game.Questions {
+			game.UsersAnswers = append(game.UsersAnswers, &models.UserAnswer{QuestionId: q.ID})
+		}
 		err := u.gameRepo.Store(ctx, game)
 		if err != nil {
 			return nil, err
@@ -76,4 +81,28 @@ func (u *gameUsecase) GetGameById(ctx context.Context, gameId string) (*models.G
 		return nil, err
 	}
 	return game, nil
+}
+
+func (u *gameUsecase) AnswerQuestion(ctx context.Context, gameId, questionId, userId, answer string) error {
+	ctx, cancel := context.WithTimeout(ctx, u.contextTimeout)
+	defer cancel()
+	game, err := u.gameRepo.GetGameByGameIdQuestionId(ctx, gameId, questionId)
+	if err != nil {
+		return err
+	}
+	var userNum int8
+	if bson.ObjectIdHex(userId) == game.User1ID {
+		userNum = 1
+	} else {
+		userNum = 2
+	}
+	questionObjectId := bson.ObjectIdHex(questionId)
+	for i, val := range game.UsersAnswers {
+		if val.QuestionId ==  questionObjectId {
+
+			updatedField := fmt.Sprintf("users_answers.%d.user%d_answer", i, userNum)
+			return u.gameRepo.Update(ctx, game, bson.M{updatedField: answer})
+		}
+	}
+	return errors.New("not found")
 }
