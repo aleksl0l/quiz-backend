@@ -71,7 +71,7 @@ func main() {
 
 	userHttpDeliver.NewUserHttpHandler(e, uu)
 	questionHttpDeliver.NewQuestionHttpHandler(e, qu)
-	gameHttpDeliver.NewGameHttpHandelr(e, gu)
+	gameHttpDeliver.NewGameHttpHandler(e, gu)
 
 	e.Logger.Fatal(e.Start(viper.GetString("server.address")))
 }

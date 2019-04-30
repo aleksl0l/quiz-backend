@@ -19,7 +19,11 @@ type searchGameRequest struct {
 	Category string `json:"category"`
 }
 
-func NewGameHttpHandelr(e *echo.Echo, gu game.Usecase) {
+type answerRequest struct {
+	Answer string `json:"answer"`
+}
+
+func NewGameHttpHandler(e *echo.Echo, gu game.Usecase) {
 	handler := &HttpGameHandler{
 		GUsecase: gu,
 	}
@@ -28,6 +32,7 @@ func NewGameHttpHandelr(e *echo.Echo, gu game.Usecase) {
 	gameGroup.POST("/search_game", handler.SearchGame)
 	gameGroup.GET("", handler.GetGames)
 	gameGroup.GET("/:gameId", handler.GetGameById)
+	gameGroup.POST("/:gameId/questions/:questionId/answer", handler.AnswerQuestion)
 }
 
 func (u *HttpGameHandler) SearchGame(c echo.Context) error {
@@ -39,9 +44,7 @@ func (u *HttpGameHandler) SearchGame(c echo.Context) error {
 	if ctx == nil {
 		ctx = context.Background()
 	}
-	user := c.Get("user").(*jwt.Token)
-	claims := user.Claims.(jwt.MapClaims)
-	userId := claims["id"].(string)
+	userId := getUserIdFromContext(c)
 	game, err := u.GUsecase.SearchGame(ctx, userId, request.Type, request.Category)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
@@ -69,13 +72,25 @@ func (u *HttpGameHandler) GetGameById(c echo.Context) error {
 	if ctx == nil {
 		ctx = context.Background()
 	}
-	//user := c.Get("user").(*jwt.Token)
-	//claims := user.Claims.(jwt.MapClaims)
-	//userId := claims["id"].(string)
 	gameId := c.Param("gameId")
 	game, err := u.GUsecase.GetGameById(ctx, gameId)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 	return c.JSON(http.StatusOK, game)
+}
+
+func (u *HttpGameHandler) AnswerQuestion(c echo.Context) error {
+	ctx := c.Request().Context()
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	request := &answerRequest{}
+	if err := c.Bind(request); err != nil {
+		return err
+	}
+	gameId := c.Param("gameId")
+	questionId := c.Param("questionId")
+	userId := getUserIdFromContext(c)
+	return u.GUsecase.AnswerQuestion(ctx, gameId, questionId, userId, request.Answer)
 }

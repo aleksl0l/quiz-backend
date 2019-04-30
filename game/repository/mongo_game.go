@@ -52,3 +52,14 @@ func (r *mongoGameRepository) Update(ctx context.Context, game *models.Game, upd
 	}
 	return nil
 }
+
+func (r *mongoGameRepository) GetGameByGameIdQuestionId(ctx context.Context, gameId, questionId string) (*models.Game, error) {
+	gameObjectId := bson.ObjectIdHex(gameId)
+	questionObjectId := bson.ObjectIdHex(questionId)
+	game := &models.Game{}
+	err := r.DB.C("games").Find(bson.M{"_id": gameObjectId, "questions._id": questionObjectId}).One(game)
+	if err != nil {
+		return nil, err
+	}
+	return game, nil
+}
